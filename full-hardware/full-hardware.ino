@@ -19,8 +19,12 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
+Servo myservo; 
+int servo_pos =0;
+
 const int REED_PIN = 23; // Pin connected to reed switch// LED pin
 const int BUZZER_PIN = 18;
+const int SERVO_PIN = 21;
 
 
 static NimBLEServer *pServer;
@@ -36,6 +40,7 @@ FirebaseAuth auth;
 FirebaseConfig config;
 
 bool taskCompleted = false;
+bool doorClosed = false;
 
 unsigned long dataMillis = 0;
 
@@ -94,12 +99,21 @@ void unblockStreamTimeoutCallback(bool timeout)
 
 void lockDoor(){
   Serial.println("Door in locked state!");
+  myservo.write(180);
 }
 
 void unlockDoor(){
   Serial.println("Door in unlocked state!");
+  myservo.write(0);
 }
 
+void detectBrokenInto(){
+  //if locked
+  if(lockState && !doorClosed){
+    //tone(BUZZER_PIN,400);
+  }
+  else noTone(BUZZER_PIN);
+}
 
 
 
@@ -289,6 +303,16 @@ void setup() {
                                      // pinMode(LED_PIN, OUTPUT);
     pinMode(BUZZER_PIN,OUTPUT);
 
+    //servo shit
+     // Allow allocation of all timers
+    ESP32PWM::allocateTimer(0);
+    ESP32PWM::allocateTimer(1);
+    ESP32PWM::allocateTimer(2);
+    ESP32PWM::allocateTimer(3);
+    myservo.setPeriodHertz(50);    // standard 50 hz servo
+    myservo.attach(SERVO_PIN, 1000, 2000); // attaches the servo on pin 18 to the servo object
+    // using default min/max of 1000us and 2000us
+
 }
 
 unsigned long ble_timestamp = 0;
@@ -327,14 +351,18 @@ void loop() {
     // If the pin reads low, the switch is closed.
     if (proximity == LOW)
     {
+      doorClosed = true;
+
         //Serial.println("Switch closed");
-        tone(BUZZER_PIN, 400);
+        //tone(BUZZER_PIN, 400);
         // digitalWrite(LED_PIN, HIGH);	// Turn the LED on
     }
     else
     {
+        doorClosed = false;
         //Serial.println("Switch opened");
-        noTone(BUZZER_PIN);
+        //noTone(BUZZER_PIN);
         // digitalWrite(LED_PIN, LOW);		// Turn the LED off
     }
+    detectBrokenInto();
 }

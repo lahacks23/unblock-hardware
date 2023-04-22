@@ -22,6 +22,7 @@ void setup()
     Serial.println("Working!");
     pinMode(REED_PIN, INPUT_PULLUP); // Enable internal pull-up for the reed switch
                                      // pinMode(LED_PIN, OUTPUT);
+    pinMode(BUZZER_PIN,OUTPUT);
 }
 
 void loop()
